@@ -5,10 +5,12 @@ var CSOB_Parser = function(){
 	
 	
 	
-	this.parse = function(){
+	this.parse = function(callback){
 		var file = "/Users/jandufek/Downloads/HIST_198401220_201506161738.txt";
 		
-		var regexp = /datum zaúčtování:\s*(.*)\s*částka:\s*(.*)\s*měna:\s*(.*)\s*zůstatek:\s*(.*)\s*konstantní symbol:\s*(.*)\s*variabilní symbol:\s*(.*)\s*specifický symbol:\s*(.*)\s*označení operace:\s*(.*)\s*název protiúčtu:\s*(.*)\s*protiúčet:\s*(.*)\s*poznámka:\s*(.*\s*.*)/g;
+		var regexp = /datum zaúčtování:\s*(\d{1,2})\.(\d{1,2})\.(\d{4})\s*částka:\s*(.*)\s*měna:\s*(.*)\s*zůstatek:\s*(.*)\s*konstantní symbol:\s*(.*)\s*variabilní symbol:\s*(.*)\s*specifický symbol:\s*(.*)\s*označení operace:\s*(.*)\s*název protiúčtu:\s*(.*)\s*protiúčet:\s*(.*)\s*poznámka:\s*(.*\s*.*)/g;
+		
+		var regexpCard = /(\d{1,2})\.(\d{1,2})\.(\d{4})\s*Místo:\s*(.*)/g;
 		
 		var payments = new Array();
 		
@@ -19,37 +21,50 @@ var CSOB_Parser = function(){
 			var match = regexp.exec(data);
 			while (match != null){
 				var p = paymentBuilder.newPayment();
-				p.date = match[1];
-				p.price = match[2];
-				p.currency = match[3];
-				p.balance = match[4];
-				p.ks = match[5];
-				p.vs = match[6];
-				p.ss = match[7];
-				p.label = match[8];
-				p.offset_name = match[9];
-				p.offset = match[10];
-				p.note = match[11];
+				p.date = transformDate(match[1].trim(), match[2].trim(), match[3].trim());
+				p.price = match[4].trim();
+				p.currency = match[5].trim();
+				p.balance = match[6].trim();
+				p.ks = match[7].trim();
+				p.vs = match[8].trim();
+				p.ss = match[9].trim();
+				p.label = match[10].trim();
+				p.offset_name = match[11].trim();
+				p.offset = match[12].trim();
+				p.note = match[13].trim().replace(/\s\s+/g, ' ');
 				if (p.label === 'Transakce platební kartou'){
 					p.is_card = true;
-					p.card_place = match2[];
-					p.date = match2[]
+					var cardMatch = regexpCard.exec(p.note);
+					while (cardMatch != null){
+						p.date = transformDate(cardMatch[1].trim(), cardMatch[2].trim(), cardMatch[3].trim());
+						p.card_place = cardMatch[4].trim();
+						cardMatch = regexpCard.exec(p.note);
+					}
 				} else {
 					p.is_card = false;
-				}
-				p.card_place = match[];
-				
+				}				
 				payments.push(p);
 				
 				match = regexp.exec(data);
 			}
-			return payments
+			callback(payments);
 		});
 		
+	}
+	
+	var transformDate = function(day, month, year){
+		var f = year + "-";
+		f += (month.length == 1) ? "0" + month : month;
+		f += "-";
+		f += (day.length == 1) ? "0" + day : day;
+		return f;
 	}
 	
 	
 };
 
 module.exports = new CSOB_Parser();
-module.exports.parse();
+
+
+"Částka: 37,7 CZK 19.12.2013 Místo: BILLA S.R.O. PRAHA - MENZA"
+"Částka: 84,3 CZK 18.12.2013 Místo: BILLA S.R.O. PRAHA - MENZA"

@@ -13,15 +13,20 @@ var Dao = function(){
 	
 	this.import = function(payments){
 		var stmt = db.prepare("INSERT INTO payments VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-		for (all payments) {
-			stmp.run(payment);		
-		}	
-		stmt.finalize();	
+		for (var p in payments) {
+				stmt.run(payments[p].toArray(), function(err){
+					if (err.code !== 'SQLITE_CONSTRAINT'){
+						throw err;
+					}
+				});
+		}
+		stmt.finalize();
+			
 	}
 	
 	
 	
-	this.selectByFilter() = function(){
+	this.selectByFilter = function(){
 		
 	}
 };
